@@ -1,0 +1,9 @@
+
+QT += widgets
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
+TEMPLATE = subdirs
+SUBDIRS = laybasic unit_tests
+
+unit_tests.depends += laybasic
+
