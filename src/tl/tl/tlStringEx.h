@@ -1,6 +1,3 @@
-
-
-
 #ifndef HDR_tlStringEx
 #define HDR_tlStringEx
 
