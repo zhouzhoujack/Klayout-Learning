@@ -6,7 +6,7 @@ sudo apt install python3-dev    # install python
 ```
 
 # 2. 在qtcreator切换到klayout_main进行编译
-## 编译时出现cannot find-lGL
+**编译时出现cannot find-lGL**
 ```bash
 sudo apt install libgl1-mesa-dev
 ```
