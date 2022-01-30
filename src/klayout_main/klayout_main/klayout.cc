@@ -1,26 +1,3 @@
-
-/*
-
-  KLayout Layout Viewer
-  Copyright (C) 2006-2021 Matthias Koefferlein
-
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License, or
-  (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
-*/
-
-
 #include "layApplication.h"
 #include "layFileDialog.h"
 #include "layVersion.h"
@@ -88,48 +65,29 @@ FORCE_LINK_GSI_QTUITOOLS
 #include <cstdlib>
 
 int klayout_main (int &argc, char **argv);
+static int klayout_main_cont (int &argc, char **argv);
 
-#ifdef _WIN32 // for VC++
-
-//  for VC++/MinGW provide a wrapper for main.
-#include <Windows.h>
-
-extern "C"
-int WINAPI 
-WinMain(HINSTANCE /*hInstance*/, HINSTANCE /*prevInstance*/, LPSTR /*lpCmdLine*/, int /*nShowCmd*/)
+void
+myMessageOutput(QtMsgType type, const QMessageLogContext & /*ctx*/, const QString &msg)
 {
-  int argCount = 0;
-  LPWSTR *szArgList = CommandLineToArgvW(GetCommandLineW(), &argCount);
-
-  //  fail safe behaviour
-  if (!szArgList) {
-    MessageBox(NULL, L"Unable to parse command line", L"Error", MB_OK);
-    return 10;
+  switch (type) {
+  case QtDebugMsg:
+    fprintf(stderr, "Debug: %s\n", msg.toLocal8Bit ().constData ());
+    break;
+  case QtWarningMsg:
+    fprintf(stderr, "Warning: %s\n", msg.toLocal8Bit ().constData ());
+    break;
+  case QtCriticalMsg:
+    fprintf(stderr, "Critical: %s\n", msg.toLocal8Bit ().constData ());
+    break;
+  case QtFatalMsg:
+    fprintf(stderr, "Fatal: %s\n", msg.toLocal8Bit ().constData ());
+    abort();
+  case QtInfoMsg:
+    fprintf(stderr, "Info: %s\n", msg.toLocal8Bit ().constData ());
+    abort();
   }
-
-  char **argv = new char *[argCount];
-  for (int i = 0; i < argCount; i++) {
-    QString a;
-    for (WCHAR *wc = szArgList [i]; *wc; ++wc) {
-      a += QChar ((unsigned int) *wc);
-    }
-    QByteArray aa = a.toUtf8 ();
-    argv [i] = new char [aa.size () + 1];
-    strcpy (argv [i], aa.constData ());
-  }
-
-  int ret = klayout_main (argCount, argv);
-
-  for (int i = 0; i < argCount; i++) {
-    delete[] argv [i];
-  }
-  delete[] argv;
-
-  LocalFree(szArgList);
-  return ret;
 }
-
-#else
 
 int
 main(int a_argc, const char **a_argv)
@@ -151,50 +109,6 @@ main(int a_argc, const char **a_argv)
   return ret;
 }
 
-#endif
-
-#if QT_VERSION >= 0x050000
-void myMessageOutput(QtMsgType type, const QMessageLogContext & /*ctx*/, const QString &msg)
-{
-  switch (type) {
-  case QtDebugMsg:
-    fprintf(stderr, "Debug: %s\n", msg.toLocal8Bit ().constData ());
-    break;
-  case QtWarningMsg:
-    fprintf(stderr, "Warning: %s\n", msg.toLocal8Bit ().constData ());
-    break;
-  case QtCriticalMsg:
-    fprintf(stderr, "Critical: %s\n", msg.toLocal8Bit ().constData ());
-    break;
-  case QtFatalMsg:
-    fprintf(stderr, "Fatal: %s\n", msg.toLocal8Bit ().constData ());
-    abort();
-  case QtInfoMsg:
-    fprintf(stderr, "Info: %s\n", msg.toLocal8Bit ().constData ());
-    abort();
-  }
-}
-#else
-void myMessageOutput(QtMsgType type, const char *msg)
-{
-  switch (type) {
-  case QtDebugMsg:
-    fprintf(stderr, "Debug: %s\n", msg);
-    break;
-  case QtWarningMsg:
-    fprintf(stderr, "Warning: %s\n", msg);
-    break;
-  case QtCriticalMsg:
-    fprintf(stderr, "Critical: %s\n", msg);
-    break;
-  case QtFatalMsg:
-    fprintf(stderr, "Fatal: %s\n", msg);
-    abort();
-  }
-}
-#endif
-
-static int klayout_main_cont (int &argc, char **argv);
 
 /**
  *  @brief The basic entry point
@@ -254,11 +168,7 @@ klayout_main (int &argc, char **argv)
 int 
 klayout_main_cont (int &argc, char **argv)
 {
-#if QT_VERSION >= 0x050000
   qInstallMessageHandler (myMessageOutput);
-#else
-  qInstallMsgHandler (myMessageOutput);
-#endif
 
   int result = 0;
 
